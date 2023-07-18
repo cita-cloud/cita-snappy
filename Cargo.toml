@@ -1,10 +1,13 @@
 [package]
 name = "cita-snappy"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Rivtower Technologies <contact@rivtower.com>"]
 description = "A library provide compress method"
 license = "Apache-2.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
-libc = "0.2.101"
+libc = "0.2"
+
+[build-dependencies]
+cmake = "0.1"
