@@ -6,12 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-extern crate cmake;
 
 use std::env;
-use std::fs;
-
-use cmake::Config;
 
 fn try_to_find_and_link_lib(lib_name: &str) -> bool {
     println!("cargo:rerun-if-env-changed={lib_name}_COMPILE");
@@ -37,43 +33,32 @@ fn try_to_find_and_link_lib(lib_name: &str) -> bool {
 }
 
 fn build_snappy() {
-    let src = env::current_dir().unwrap().join("snappy");
+    let target = env::var("TARGET").unwrap();
+    let endianness = env::var("CARGO_CFG_TARGET_ENDIAN").unwrap();
+    let mut config = cc::Build::new();
 
-    let out = Config::new("snappy")
-        .define("CMAKE_VERBOSE_MAKEFILE", "ON")
-        .build_target("snappy")
-        .build();
+    config.include("snappy/");
+    config.include(".");
+    config.define("NDEBUG", Some("1"));
+    config.extra_warnings(false);
 
-    let mut build = out.join("build");
-
-    // NOTE: the cfg! macro doesn't work when cross-compiling, it would return values for the host
-    let target_os = env::var("CARGO_CFG_TARGET_OS").expect("CARGO_CFG_TARGET_OS is set by cargo.");
-    let target_env = env::var("CARGO_CFG_TARGET_ENV").expect("CARGO_CFG_TARGET_ENV is set by cargo.");
-
-    if target_os.contains("windows") && target_env.contains("msvc") {
-        let stub = build.join("snappy-stubs-public.h");
-
-        let profile = match &*env::var("PROFILE").unwrap_or("debug".to_owned()) {
-            "bench" | "release" => "Release",
-            _ => "Debug",
-        };
-        build = build.join(profile);
-
-        fs::copy(stub, build.join("snappy-stubs-public.h")).unwrap();
+    if target.contains("msvc") {
+        config.flag("-EHsc");
+    } else {
+        // Snappy requires C++11.
+        // See: https://github.com/google/snappy/blob/master/CMakeLists.txt#L32-L38
+        config.flag("-std=c++11");
     }
 
-    fs::copy(src.join("snappy.h"), build.join("snappy.h")).unwrap();
-
-    println!("cargo:rustc-link-search=native={}", build.display());
-    println!("cargo:rustc-link-lib=static=snappy");
-    println!("cargo:include={}", build.display());
-
-    // https://github.com/alexcrichton/cc-rs/blob/ca70fd32c10f8cea805700e944f3a8d1f97d96d4/src/lib.rs#L891
-    if target_os.contains("apple") || target_os.contains("freebsd") || target_os.contains("openbsd") {
-        println!("cargo:rustc-link-lib=c++");
-    } else if !target_env.contains("msvc") && !target_os.contains("android") {
-        println!("cargo:rustc-link-lib=stdc++");
+    if endianness == "big" {
+        config.define("SNAPPY_IS_BIG_ENDIAN", Some("1"));
     }
+
+    config.file("snappy/snappy.cc");
+    config.file("snappy/snappy-sinksource.cc");
+    config.file("snappy/snappy-c.cc");
+    config.cpp(true);
+    config.compile("libsnappy.a");
 }
 
 fn main() {
