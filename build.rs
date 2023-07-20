@@ -8,7 +8,6 @@
 
 
 use std::env;
-use std::path::Path;
 use std::process::Command;
 
 fn try_to_find_and_link_lib(lib_name: &str) -> bool {
@@ -37,14 +36,12 @@ fn try_to_find_and_link_lib(lib_name: &str) -> bool {
 fn build_snappy() {
     let target = env::var("TARGET").unwrap();
     let out_dir = env::var("OUT_DIR").unwrap();
-    if !Path::new("snappy/snappy-stubs-public.h").exists() {
-        Command::new("cmake")
-            .arg("-DCMAKE_BUILD_TYPE=Release")
-            .arg("-S snappy")
-            .arg(format!("-B {out_dir}"))
-            .output()
-            .expect("Failed to execute CMake command");
-    }
+    Command::new("cmake")
+        .arg("-DCMAKE_BUILD_TYPE=Release")
+        .arg("-S snappy")
+        .arg(format!("-B {out_dir}"))
+        .output()
+        .expect("Failed to execute CMake command");
 
     let endianness = env::var("CARGO_CFG_TARGET_ENDIAN").unwrap();
     let mut config = cc::Build::new();
