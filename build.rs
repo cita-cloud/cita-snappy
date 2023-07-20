@@ -36,11 +36,12 @@ fn try_to_find_and_link_lib(lib_name: &str) -> bool {
 
 fn build_snappy() {
     let target = env::var("TARGET").unwrap();
+    let out_dir = env::var("OUT_DIR").unwrap();
     if !Path::new("snappy/snappy-stubs-public.h").exists() {
         Command::new("cmake")
             .arg("-DCMAKE_BUILD_TYPE=Release")
             .arg("-S snappy")
-            .arg("-B snappy")
+            .arg(format!("-B {out_dir}"))
             .output()
             .expect("Failed to execute CMake command");
     }
@@ -50,6 +51,7 @@ fn build_snappy() {
 
     config.include("snappy/");
     config.include(".");
+    config.include(out_dir);
     config.define("NDEBUG", Some("1"));
     config.extra_warnings(false);
 
