@@ -75,6 +75,8 @@ fn build_snappy_win() {
 
     let out = cmake::Config::new("snappy")
         .define("CMAKE_VERBOSE_MAKEFILE", "ON")
+        .define("SNAPPY_BUILD_TESTS", "OFF")
+        .define("SNAPPY_BUILD_BENCHMARKS", "OFF")
         .build_target("snappy")
         .build();
 
