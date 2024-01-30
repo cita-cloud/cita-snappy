@@ -37,13 +37,13 @@ pub enum SnappyStatus {
 
 impl ::std::fmt::Display for SnappyError {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
 impl ::std::fmt::Display for SnappyStatus {
     fn fmt(&self, f: &mut ::std::fmt::Formatter) -> ::std::fmt::Result {
-        write!(f, "{:?}", self)
+        write!(f, "{self:?}")
     }
 }
 
@@ -103,7 +103,7 @@ pub fn compress_to(input: &[u8], output: &mut Vec<u8>) -> Result<usize, SnappyEr
     // Try to get the maximum compressed length possibly.
     let mut compressed_len: size_t = unsafe { snappy_max_compressed_length(input_len as size_t) };
     // Reserves capacity for compressed data to be inserted.
-    output.reserve(compressed_len as usize);
+    output.reserve(compressed_len);
 
     let status = unsafe {
         snappy_compress(
@@ -118,7 +118,7 @@ pub fn compress_to(input: &[u8], output: &mut Vec<u8>) -> Result<usize, SnappyEr
     match status.into() {
         SnappyStatus::Ok => {
             unsafe { output.set_len(output_len + compressed_len) };
-            Ok(compressed_len as usize)
+            Ok(compressed_len)
         }
         s => {
             unsafe { output.set_len(output_len) };
@@ -148,7 +148,7 @@ pub fn decompress_to(input: &[u8], output: &mut Vec<u8>) -> Result<usize, Snappy
         return Err(s.into());
     }
     // Reserves capacity for uncompressed data to be inserted.
-    output.reserve(uncompressed_len as usize);
+    output.reserve(uncompressed_len);
     // Uncompress.
     let status = unsafe {
         snappy_uncompress(
@@ -161,7 +161,7 @@ pub fn decompress_to(input: &[u8], output: &mut Vec<u8>) -> Result<usize, Snappy
     match status.into() {
         SnappyStatus::Ok => {
             unsafe { output.set_len(output_len + uncompressed_len) };
-            Ok(uncompressed_len as usize)
+            Ok(uncompressed_len)
         }
         s => {
             unsafe { output.set_len(output_len) };
